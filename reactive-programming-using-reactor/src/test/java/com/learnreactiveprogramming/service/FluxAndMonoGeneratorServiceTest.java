@@ -115,6 +115,7 @@ class FluxAndMonoGeneratorServiceTest {
                     .verifyComplete();
         }
     }
+
     @Test
     void nameMono_flatMapMany() {
         {
@@ -132,14 +133,14 @@ class FluxAndMonoGeneratorServiceTest {
     @Test
     void namesFlux_transform() {
 
-            //given
-            int stringLength = 1;
-            //when
-            var namesFlux = fluxAndMonoGeneratorService.namesFlux_transform(stringLength);
-            //then
-            StepVerifier.create(namesFlux)
-                    .expectNext("G", "A", "U", "R", "A", "V", "G", "2", "G", "3")
-                    .verifyComplete();
+        //given
+        int stringLength = 1;
+        //when
+        var namesFlux = fluxAndMonoGeneratorService.namesFlux_transform(stringLength);
+        //then
+        StepVerifier.create(namesFlux)
+                .expectNext("G", "A", "U", "R", "A", "V", "G", "2", "G", "3")
+                .verifyComplete();
 
     }
 
@@ -166,8 +167,53 @@ class FluxAndMonoGeneratorServiceTest {
         var namesFlux = fluxAndMonoGeneratorService.namesFlux_transform_switchIfEmpty(stringLength);
         //then
         StepVerifier.create(namesFlux)
-                .expectNext("D","E","F","A","U","L","T")
+                .expectNext("D", "E", "F", "A", "U", "L", "T")
                 .verifyComplete();
 
+    }
+
+    @Test
+    void explore_concat() {
+        var concatFlux = fluxAndMonoGeneratorService.explore_concat();
+
+        StepVerifier.create(concatFlux)
+                .expectNext("A", "B", "C", "D", "E", "F")
+                .verifyComplete();
+    }
+
+    @Test
+    void explore_merge() {
+        var concatFlux = fluxAndMonoGeneratorService.explore_merge();
+
+        StepVerifier.create(concatFlux)
+                .expectNext("A", "D", "B", "E", "C", "F")
+                .verifyComplete();
+    }
+
+    @Test
+    void explore_mergeSequential() {
+        var concatFlux = fluxAndMonoGeneratorService.explore_merge_sequential();
+
+        StepVerifier.create(concatFlux)
+                .expectNext("A", "B", "C", "D", "E", "F")
+                .verifyComplete();
+    }
+
+    @Test
+    void explore_zip() {
+        var concatFlux = fluxAndMonoGeneratorService.explore_zip();
+
+        StepVerifier.create(concatFlux)
+                .expectNext("AD", "BE", "CF")
+                .verifyComplete();
+    }
+
+    @Test
+    void explore_zipWith() {
+        var concatFlux = fluxAndMonoGeneratorService.explore_zip1();
+
+        StepVerifier.create(concatFlux)
+                .expectNext("AD14", "BE25", "CF36")
+                .verifyComplete();
     }
 }

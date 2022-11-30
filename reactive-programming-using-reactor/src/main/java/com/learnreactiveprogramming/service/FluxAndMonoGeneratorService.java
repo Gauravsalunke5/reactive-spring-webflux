@@ -2,6 +2,7 @@ package com.learnreactiveprogramming.service;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple4;
 
 import java.time.Duration;
 import java.util.List;
@@ -88,7 +89,7 @@ public class FluxAndMonoGeneratorService {
     }
 
     public Flux<String> namesFlux_transform(int stringLength) {
-        Function<Flux<String>,Flux<String>> filterMap= name->name.map(String::toUpperCase)
+        Function<Flux<String>, Flux<String>> filterMap = name -> name.map(String::toUpperCase)
                 .filter(s -> s.length() > stringLength);
         return Flux.fromIterable(List.of("Gaurav", "G2", "g3"))// db or remove service
                 .transform(filterMap)
@@ -98,13 +99,90 @@ public class FluxAndMonoGeneratorService {
     }
 
     public Flux<String> namesFlux_transform_switchIfEmpty(int stringLength) {
-        Function<Flux<String>,Flux<String>> filterMap= name->name.map(String::toUpperCase)
-                .filter(s -> s.length() > stringLength) .flatMap(s -> splitString(s));
-       var defaultFlux= Flux.just("default").transform(filterMap);
+        Function<Flux<String>, Flux<String>> filterMap = name -> name.map(String::toUpperCase)
+                .filter(s -> s.length() > stringLength).flatMap(s -> splitString(s));
+        var defaultFlux = Flux.just("default").transform(filterMap);
         return Flux.fromIterable(List.of("Gaurav", "G2", "g3"))// db or remove service
                 .transform(filterMap)
                 .switchIfEmpty(defaultFlux)
                 .log();
+    }
+
+    public Flux<String> explore_concat() {
+        var abcFlux = Flux.just("A", "B", "C");
+        var dedFlux = Flux.just("D", "E", "F");
+        return Flux.concat(abcFlux, dedFlux).log();
+    }
+
+    public Flux<String> explore_concatWith() {
+        var abcFlux = Flux.just("A", "B", "C");
+        var dedFlux = Flux.just("D", "E", "F");
+        return abcFlux.concatWith(dedFlux).log();
+    }
+
+    public Flux<String> explore_concatWith_mono() {
+        var aMono = Mono.just("A");
+        var bMono = Mono.just("B");
+        return aMono.concatWith(bMono).log();
+    }
+
+    public Flux<String> explore_merge() {
+        var abcFlux = Flux.just("A", "B", "C").
+                delayElements(Duration.ofMillis(100));
+        var dedFlux = Flux.just("D", "E", "F")
+                .delayElements(Duration.ofMillis(120));
+        return Flux.merge(abcFlux, dedFlux).log();
+    }
+
+    public Flux<String> explore_merge_with() {
+        var abcFlux = Flux.just("A", "B", "C").
+                delayElements(Duration.ofMillis(100));
+        var dedFlux = Flux.just("D", "E", "F")
+                .delayElements(Duration.ofMillis(120));
+        return abcFlux.mergeWith(dedFlux).log();
+    }
+
+    public Flux<String> explore_mergeWith_mono() {
+        var aMono = Mono.just("A");
+        var bMono = Mono.just("B");
+        return aMono.mergeWith(bMono).log();
+    }
+
+    public Flux<String> explore_merge_sequential() {
+        var abcFlux = Flux.just("A", "B", "C").
+                delayElements(Duration.ofMillis(100));
+        var dedFlux = Flux.just("D", "E", "F")
+                .delayElements(Duration.ofMillis(120));
+        return Flux.mergeSequential(abcFlux,dedFlux).log();
+    }
+
+    public Flux<String> explore_zip() {
+        var abcFlux = Flux.just("A", "B", "C");
+
+        var dedFlux = Flux.just("D", "E", "F");
+        return Flux.zip(abcFlux,dedFlux,(first,second)->first+second).log();//AD,BE,CF
+    }
+
+    public Flux<String> explore_zip1() {
+        var abcFlux = Flux.just("A", "B", "C");
+        var dedFlux = Flux.just("D", "E", "F");
+        var _123Flux =Flux.just("1","2","3");
+        var _456Flux =Flux.just("4","5","6");
+
+        return Flux.zip(abcFlux,dedFlux,_123Flux,_456Flux)
+                .map(t4->t4.getT1()+t4.getT2()+t4.getT3()+t4.getT4()).log();
+    }
+
+    public Flux<String> explore_zipWith() {
+        var abcFlux = Flux.just("A", "B", "C");
+
+        var dedFlux = Flux.just("D", "E", "F");
+        return abcFlux.zipWith(dedFlux,(first,second)->first+second).log();//AD,BE,CF
+    }
+    public Mono<String> explore_zipWith_mono() {
+        var aMono = Mono.just("A");
+        var bMono = Mono.just("B");
+        return aMono.zipWith(bMono).map(t2->t2.getT1()+t2.getT2()).log();
     }
     public Flux<String> splitString(String name) {
         var charArray = name.split("");
