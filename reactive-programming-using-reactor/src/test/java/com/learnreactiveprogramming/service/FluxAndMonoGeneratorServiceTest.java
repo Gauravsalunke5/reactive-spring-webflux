@@ -115,4 +115,59 @@ class FluxAndMonoGeneratorServiceTest {
                     .verifyComplete();
         }
     }
+    @Test
+    void nameMono_flatMapMany() {
+        {
+            //given
+            int stringLength = 1;
+            //when
+            var namesMono = fluxAndMonoGeneratorService.nameMono_flatMapMany(stringLength);
+            //then
+            StepVerifier.create(namesMono)
+                    .expectNext("G", "A", "U", "R", "A", "V")
+                    .verifyComplete();
+        }
+    }
+
+    @Test
+    void namesFlux_transform() {
+
+            //given
+            int stringLength = 1;
+            //when
+            var namesFlux = fluxAndMonoGeneratorService.namesFlux_transform(stringLength);
+            //then
+            StepVerifier.create(namesFlux)
+                    .expectNext("G", "A", "U", "R", "A", "V", "G", "2", "G", "3")
+                    .verifyComplete();
+
+    }
+
+    @Test
+    void namesFlux_transform_1() {
+
+        //given
+        int stringLength = 6;
+        //when
+        var namesFlux = fluxAndMonoGeneratorService.namesFlux_transform(stringLength);
+        //then
+        StepVerifier.create(namesFlux)
+                .expectNext("default")
+                .verifyComplete();
+
+    }
+
+    @Test
+    void namesFlux_transform_switchIfEmpty() {
+
+        //given
+        int stringLength = 6;
+        //when
+        var namesFlux = fluxAndMonoGeneratorService.namesFlux_transform_switchIfEmpty(stringLength);
+        //then
+        StepVerifier.create(namesFlux)
+                .expectNext("D","E","F","A","U","L","T")
+                .verifyComplete();
+
+    }
 }

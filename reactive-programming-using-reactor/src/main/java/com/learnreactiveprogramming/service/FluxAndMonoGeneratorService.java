@@ -6,6 +6,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Function;
 
 public class FluxAndMonoGeneratorService {
     public Flux<String> namesFlux() {
@@ -36,6 +37,13 @@ public class FluxAndMonoGeneratorService {
                 .flatMap(this::splitMono);
     }
 
+    public Flux<String> nameMono_flatMapMany(int stringLength) {
+        return Mono.just("Gaurav")
+                .map(String::toUpperCase)
+                .filter(s -> s.length() > stringLength)
+                .flatMapMany(this::splitString);
+    }
+
     private Mono<List<String>> splitMono(String s) {
         var charArray = s.split("");
         var charList = List.of(charArray);
@@ -60,6 +68,7 @@ public class FluxAndMonoGeneratorService {
                 .log();
     }
 
+
     public Flux<String> namesFlux_flatmap_async(int stringLength) {
         // filter the string whose length greater than 3
         return Flux.fromIterable(List.of("Gaurav", "G2", "g3"))// db or remove service
@@ -78,6 +87,25 @@ public class FluxAndMonoGeneratorService {
                 .log();
     }
 
+    public Flux<String> namesFlux_transform(int stringLength) {
+        Function<Flux<String>,Flux<String>> filterMap= name->name.map(String::toUpperCase)
+                .filter(s -> s.length() > stringLength);
+        return Flux.fromIterable(List.of("Gaurav", "G2", "g3"))// db or remove service
+                .transform(filterMap)
+                .flatMap(s -> splitString(s))//"G","A","U","R","A","V","G","2","G","3"
+                .defaultIfEmpty("default")
+                .log();
+    }
+
+    public Flux<String> namesFlux_transform_switchIfEmpty(int stringLength) {
+        Function<Flux<String>,Flux<String>> filterMap= name->name.map(String::toUpperCase)
+                .filter(s -> s.length() > stringLength) .flatMap(s -> splitString(s));
+       var defaultFlux= Flux.just("default").transform(filterMap);
+        return Flux.fromIterable(List.of("Gaurav", "G2", "g3"))// db or remove service
+                .transform(filterMap)
+                .switchIfEmpty(defaultFlux)
+                .log();
+    }
     public Flux<String> splitString(String name) {
         var charArray = name.split("");
         return Flux.fromArray(charArray);
