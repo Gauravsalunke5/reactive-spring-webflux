@@ -51,5 +51,67 @@ class MovieInfoRepositoryIntgTest {
                 .verifyComplete();
     }
 
+    @Test
+    void findById() {
+
+
+        var movieInfoMono = movieInfoRepository.findById("abc").log();
+
+        StepVerifier.create(movieInfoMono)
+                //.expectNextCount(1)
+                .assertNext(movieInfo -> {
+                    assertEquals("Dark Knight Rises", movieInfo.getName());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void saveMovieInfo() {
+        //given
+        var movieInfo = new MovieInfo(null, "Batman Begins1",
+                2005, List.of("Christian Bale", "Michael Cane"), LocalDate.parse("2005-06-15"));
+        //when
+        var movieInfoMono = movieInfoRepository.save(movieInfo).log();
+
+        //then
+        StepVerifier.create(movieInfoMono)
+                //.expectNextCount(1)
+                .assertNext(movieInfo1 -> {
+                    assertNotNull(movieInfo1.getMovieInfoId());
+                    assertEquals("Batman Begins1", movieInfo1.getName());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void updateMovieInfo() {
+        //given
+        var movieInfo = movieInfoRepository.findById("abc").block();
+        movieInfo.setYear(2021);
+
+        //when
+        var movieInfoMono = movieInfoRepository.save(movieInfo).log();
+
+        //then
+        StepVerifier.create(movieInfoMono)
+                //.expectNextCount(1)
+                .assertNext(movieInfo1 -> {
+                    assertNotNull(movieInfo1.getMovieInfoId());
+                    assertEquals(2021, movieInfo1.getYear());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void deleteMovieInfo() {
+
+
+        movieInfoRepository.deleteById("abc").log().block();
+        var movieInfoFlux = movieInfoRepository.findAll().log();
+
+        StepVerifier.create(movieInfoFlux)
+                .expectNextCount(2)
+                .verifyComplete();
+    }
 
 }

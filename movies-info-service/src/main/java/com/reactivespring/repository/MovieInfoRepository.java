@@ -6,6 +6,5 @@ import reactor.core.publisher.Flux;
 
 import java.util.List;
 
-public interface MovieInfoRepository extends ReactiveMongoRepository<MovieInfoRepository, String> {
-    Flux<Object> saveAll(List<MovieInfo> movieinfos);
+public interface MovieInfoRepository extends ReactiveMongoRepository<MovieInfo, String> {
 }
