@@ -50,6 +50,7 @@ public class MovieInfoControllerUnitTest {
                 .expectBodyList(MovieInfo.class)
                 .hasSize(3);
     }
+
     @Test
     void getMovieInfoById() {
         var id = "abc";
@@ -123,14 +124,12 @@ public class MovieInfoControllerUnitTest {
                 .expectBody(String.class)
                 .consumeWith(result -> {
                     var error = result.getResponseBody();
-                    assert  error!=null;
+                    assert error != null;
                     String expectedErrorMessage = "movieInfo.cast must be present,movieInfo.name must be present,movieInfo.year must be a Positive Value";
                     assertEquals(expectedErrorMessage, error);
 
                 });
     }
-
-
 
 
     @Test
@@ -191,5 +190,22 @@ public class MovieInfoControllerUnitTest {
                 .isNoContent();
     }
 
+    @Test
+    void getMovieInfoById_notFound() {
+        var id = "abc1";
+        when(moviesInfoServiceMock.getMovieInfoById(isA(String.class)))
+                .thenReturn(Mono.just(new MovieInfo("abc", "Dark Knight Rises",
+                        2012, List.of("Christian Bale", "Tom Hardy"), LocalDate.parse("2012-07-20"))));
+
+        when(moviesInfoServiceMock.getMovieInfoById(isA(String.class)))
+                .thenReturn(Mono.empty());
+        webTestClient
+                .get()
+                .uri(MOVIES_INFO_URL + "/{id}", id)
+                .exchange()
+                .expectStatus()
+                .isNotFound();
+        ;
+    }
 
 }

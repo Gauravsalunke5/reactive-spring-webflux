@@ -33,11 +33,18 @@ public class MoviesInfoController {
         return moviesInfoService.getAllMovieInfos();
     }
 
-    @GetMapping("/movieinfos/{id}")
+ /*   @GetMapping("/movieinfos/{id}")
     public Mono<MovieInfo> getMovieInfoById(@PathVariable String id) {
         return moviesInfoService.getMovieInfoById(id);
     }
-
+*/
+    @GetMapping("/movieinfos/{id}")
+    public Mono<ResponseEntity<MovieInfo>> getMovieInfoById2(@PathVariable String id) {
+        return moviesInfoService.getMovieInfoById(id)
+                .map(movieInfo1 -> ResponseEntity.ok()
+                        .body(movieInfo1))
+                .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+    }
 
     @PostMapping("/movieinfos")
     @ResponseStatus(HttpStatus.CREATED)
