@@ -30,7 +30,6 @@ public class ReviewsUnitTest {
     @MockBean
     private ReviewReactiveRepository reviewReactiveRepository;
 
-
     @Autowired
     private WebTestClient webTestClient;
 
@@ -64,7 +63,7 @@ public class ReviewsUnitTest {
         var review = new Review(null, 1L, "Awesome Movie", 9.0);
 
         when(reviewReactiveRepository.save(isA(Review.class))).thenReturn(Mono.just(new Review("abc", 1L, "Awesome Movie", 9.0)));
-         //when
+        //when
         webTestClient
                 .post()
                 .uri("/v1/reviews")
@@ -106,7 +105,6 @@ public class ReviewsUnitTest {
 
         when(reviewReactiveRepository.save(isA(Review.class))).thenReturn(Mono.just(new Review("abc", 1L, "Not an Awesome Movie", 8.0)));
         when(reviewReactiveRepository.findById((String) any())).thenReturn(Mono.just(new Review("abc", 1L, "Awesome Movie", 9.0)));
-        //doCallRealMethod().when(reviewValidator).validate(any(), any());
         //when
 
 

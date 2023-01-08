@@ -11,9 +11,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.test.StepVerifier;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,16 +24,16 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureWebTestClient
 class MoviesInfoControllerIntgTest {
 
-    public static final String MOVIES_INFO_URL = "/v1/movieinfos";
     @Autowired
-    MovieInfoRepository movieInfoRepository;
+    private WebTestClient webTestClient;
 
     @Autowired
-    WebTestClient webTestClient;
+    private MovieInfoRepository movieInfoRepository;
+
+    static String MOVIES_INFO_URL = "/v1/movieinfos";
 
     @BeforeEach
     void setUp() {
-
         var movieinfos = List.of(new MovieInfo(null, "Batman Begins",
                         2005, List.of("Christian Bale", "Michael Cane"), LocalDate.parse("2005-06-15")),
                 new MovieInfo(null, "The Dark Knight",
@@ -39,15 +41,11 @@ class MoviesInfoControllerIntgTest {
                 new MovieInfo("abc", "Dark Knight Rises",
                         2012, List.of("Christian Bale", "Tom Hardy"), LocalDate.parse("2012-07-20")));
 
-        movieInfoRepository.saveAll(movieinfos)
+        movieInfoRepository
+                .deleteAll()
+                .thenMany(movieInfoRepository.saveAll(movieinfos))
                 .blockLast();
     }
-
-    @AfterEach
-    void tearDown() {
-        movieInfoRepository.deleteAll().block();
-    }
-
 
     @Test
     void getAllMovieInfos() {
@@ -62,6 +60,43 @@ class MoviesInfoControllerIntgTest {
                 .hasSize(3);
     }
 
+    @Test
+    void getAllMovieInfos_Stream() {
+
+        var movieInfo = new MovieInfo(null, "Batman Begins",
+                2005, List.of("Christian Bale", "Michael Cane"), LocalDate.parse("2005-06-15"));
+
+        webTestClient
+                .post()
+                .uri(MOVIES_INFO_URL)
+                .bodyValue(movieInfo)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody(MovieInfo.class)
+                .consumeWith(movieInfoEntityExchangeResult -> {
+                    var savedMovieInfo = movieInfoEntityExchangeResult.getResponseBody();
+                    assert Objects.requireNonNull(savedMovieInfo).getMovieInfoId() != null;
+
+                });
+
+        var moviesStreamFlux = webTestClient
+                .get()
+                .uri(MOVIES_INFO_URL + "/stream")
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .returnResult(MovieInfo.class)
+                .getResponseBody();
+
+        StepVerifier.create(moviesStreamFlux)
+                .assertNext(movieInfo1 -> {
+                    assert movieInfo1.getMovieInfoId()!=null;
+                })
+                .thenCancel()
+                .verify();
+
+    }
 
     @Test
     void getMovieInfoByYear() {
@@ -79,9 +114,11 @@ class MoviesInfoControllerIntgTest {
                 .hasSize(1);
 
     }
+
     @Test
-    void addMovieInfos() {
-        var movieInfo = new MovieInfo(null, "Batman Begins1",
+    void addNewMovieInfo() {
+
+        var movieInfo = new MovieInfo(null, "Batman Begins",
                 2005, List.of("Christian Bale", "Michael Cane"), LocalDate.parse("2005-06-15"));
         webTestClient
                 .post()
@@ -92,12 +129,42 @@ class MoviesInfoControllerIntgTest {
                 .isCreated()
                 .expectBody(MovieInfo.class)
                 .consumeWith(movieInfoEntityExchangeResult -> {
-                    var saveMovieInfo = movieInfoEntityExchangeResult.getResponseBody();
-                    assert saveMovieInfo != null;
-                    assert saveMovieInfo.getMovieInfoId() != null;
+                    var savedMovieInfo = movieInfoEntityExchangeResult.getResponseBody();
+                    assert Objects.requireNonNull(savedMovieInfo).getMovieInfoId() != null;
 
                 });
     }
+
+   /* @Test
+    void addNewMovieInfo_validation() {
+
+        var movieInfo = new MovieInfo(null, "",
+                -2005, List.of(""), LocalDate.parse("2005-06-15"));
+        webTestClient
+                .post()
+                .uri(MOVIES_INFO_URL)
+                .bodyValue(movieInfo)
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+                *//*.expectBody(String.class)
+                .consumeWith(entityExchangeResult -> {
+                    var errorMessage = entityExchangeResult.getResponseBody();
+                    System.out.println("errorMessage : " + errorMessage);
+                    assert errorMessage!=null;
+                });*//*
+     *//*.expectBody()
+                .jsonPath("$.error").isEqualTo("Bad Request");*//*
+
+                .expectBody(String.class)
+                .consumeWith(result -> {
+                    var error = result.getResponseBody();
+                    assert  error!=null;
+                    String expectedErrorMessage = "movieInfo.cast must be present,movieInfo.name must be present,movieInfo.year must be a Positive Value";
+                    assertEquals(expectedErrorMessage, error);
+
+                });
+    }*/
 
     @Test
     void getMovieInfoById() {
@@ -169,16 +236,12 @@ class MoviesInfoControllerIntgTest {
     @Test
     void deleteMovieInfoById() {
         var id = "abc";
+
         webTestClient
                 .delete()
                 .uri(MOVIES_INFO_URL + "/{id}", id)
                 .exchange()
                 .expectStatus()
                 .isNoContent();
-
-
-
     }
-
-
 }

@@ -110,7 +110,7 @@ public class ReviewsIntgTest {
 
         StepVerifier.create(reviewStreamFlux)
                 .assertNext(rev -> {
-                    assert rev.getReviewId() != null;
+                    assert rev.getReviewId()!=null;
                 })
                 .thenCancel()
                 .verify();
@@ -172,7 +172,7 @@ public class ReviewsIntgTest {
 
         webTestClient
                 .put()
-                .uri(REVIEWS_URL + "/{id}", savedReview.getReviewId())
+                .uri(REVIEWS_URL+"/{id}", savedReview.getReviewId())
                 .bodyValue(reviewUpdate)
                 .exchange()
                 .expectStatus().isOk()
@@ -195,7 +195,7 @@ public class ReviewsIntgTest {
         //when
         webTestClient
                 .put()
-                .uri(REVIEWS_URL + "/{id}", "abc")
+                .uri(REVIEWS_URL+"/{id}", "abc")
                 .bodyValue(reviewUpdate)
                 .exchange()
                 .expectStatus().isNotFound();
@@ -210,7 +210,7 @@ public class ReviewsIntgTest {
         assert savedReview != null;
         webTestClient
                 .delete()
-                .uri(REVIEWS_URL + "/{id}", savedReview.getReviewId())
+                .uri(REVIEWS_URL+"/{id}", savedReview.getReviewId())
                 .exchange()
                 .expectStatus().isNoContent();
     }

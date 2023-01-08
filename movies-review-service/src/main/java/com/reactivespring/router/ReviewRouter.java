@@ -21,7 +21,7 @@ public class ReviewRouter {
                                 .POST("", reviewsHandler::addReview)
                                 .PUT("/{id}", reviewsHandler::updateReview)
                                 .DELETE("/{id}", reviewsHandler::deleteReview)
-                )
+                                .GET("/stream", reviewsHandler::getReviewsStream))
                 .GET("/v1/helloworld", (request -> ServerResponse.ok().bodyValue("HelloWorld")))
                 .GET("/v1/greeting/{name}", (request -> ServerResponse.ok().bodyValue("hello " + request.pathVariable("name"))))
                 //  .GET("/v1/reviews",reviewsHandler::getReviews)

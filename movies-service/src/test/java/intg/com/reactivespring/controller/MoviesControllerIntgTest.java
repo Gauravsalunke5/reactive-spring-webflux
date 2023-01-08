@@ -26,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
         "restClient.reviewsUrl=http://localhost:8084/v1/reviews",
 })
 public class MoviesControllerIntgTest {
-
     @Autowired
     WebTestClient webTestClient;
 
@@ -34,8 +33,9 @@ public class MoviesControllerIntgTest {
     void setUp() {
         WireMock.reset();
     }
+
     @Test
-    void retriveMovieById() {
+    void retrieveMovieById() {
         //given
         var movieId = "abc";
         stubFor(get(urlEqualTo("/v1/movieinfos/" + movieId))
@@ -48,6 +48,7 @@ public class MoviesControllerIntgTest {
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json")
                         .withBodyFile("reviews.json")));
+
 
         //when
         webTestClient.get()
@@ -86,6 +87,8 @@ public class MoviesControllerIntgTest {
         //then
         // WireMock.verify(4, getRequestedFor(urlEqualTo("/v1/movieinfos/" + movieId)));;
     }
+
+
     @Test
     void retrieveMovieById_Reviews_404() {
         //given
@@ -136,7 +139,7 @@ public class MoviesControllerIntgTest {
                 });
         //then
 
-       WireMock.verify(4, getRequestedFor(urlEqualTo("/v1/movieinfos/" + movieId)));
+        WireMock.verify(4, getRequestedFor(urlEqualTo("/v1/movieinfos/" + movieId)));
     }
 
     @Test
@@ -166,6 +169,6 @@ public class MoviesControllerIntgTest {
                 });
         //then
 
-      //  WireMock.verify(4, getRequestedFor(urlPathMatching("/v1/reviews*")));
+        WireMock.verify(4, getRequestedFor(urlPathMatching("/v1/reviews*")));
     }
 }

@@ -6,11 +6,13 @@ import com.reactivespring.repository.ReviewReactiveRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 
 import javax.validation.ConstraintViolation;
@@ -25,6 +27,7 @@ public class ReviewHandler {
     private Validator validator;
     private ReviewReactiveRepository reviewReactiveRepository;
 
+    Sinks.Many<Review> reviewsSink = Sinks.many().replay().latest();
 
     public ReviewHandler(ReviewReactiveRepository reviewReactiveRepository) {
         this.reviewReactiveRepository = reviewReactiveRepository;
@@ -38,6 +41,9 @@ public class ReviewHandler {
                 .doOnNext(this::validate)
                 .flatMap(review -> {
                     return reviewReactiveRepository.save(review);
+                })
+                .doOnNext(review -> {
+                    reviewsSink.tryEmitNext(review);
                 })
                 .flatMap(saveReview -> {
                     return ServerResponse.status(HttpStatus.CREATED).bodyValue(saveReview);
@@ -65,26 +71,18 @@ public class ReviewHandler {
 
     public Mono<ServerResponse> getReviews(ServerRequest serverRequest) {
         var movieInfoId = serverRequest.queryParam("movieInfoId");
+        Flux<Review> reviews;
         if (movieInfoId.isPresent()) {
-            var reviews = reviewReactiveRepository.findReviewsByMovieInfoId(Long.valueOf(movieInfoId.get()));
-            return buildReviewsResponse(reviews);
+            reviews = reviewReactiveRepository.findReviewsByMovieInfoId(Long.valueOf(movieInfoId.get()));
         } else {
-            var reviews = reviewReactiveRepository.findAll();
-            return buildReviewsResponse(reviews);
+            reviews = reviewReactiveRepository.findAll();
         }
+        return buildReviewsResponse(reviews);
     }
 
     private Mono<ServerResponse> buildReviewsResponse(Flux<Review> reviews) {
         return ServerResponse.ok()
                 .body(reviews, Review.class);
-    }
-
-    public Mono<ServerResponse> deleteReview(ServerRequest serverRequest) {
-        var reviewId = serverRequest.pathVariable("id");
-        return reviewReactiveRepository.findById(reviewId)
-                .flatMap(review -> reviewReactiveRepository.deleteById(reviewId))
-                .then(ServerResponse.noContent().build());
-
     }
 
     public Mono<ServerResponse> updateReview(ServerRequest serverRequest) {
@@ -106,6 +104,23 @@ public class ReviewHandler {
                                 ServerResponse.status(HttpStatus.OK)
                                         .bodyValue(savedReview)))
                 .switchIfEmpty(notFound);
+
+
+    }
+
+    public Mono<ServerResponse> deleteReview(ServerRequest serverRequest) {
+        var reviewId = serverRequest.pathVariable("id");
+        return reviewReactiveRepository.findById(reviewId)
+                .flatMap(review -> reviewReactiveRepository.deleteById(reviewId))
+                .then(ServerResponse.noContent().build());
+
+    }
+
+    public Mono<ServerResponse> getReviewsStream(ServerRequest serverRequest) {
+        return ServerResponse.ok()
+                .contentType(MediaType.APPLICATION_NDJSON)
+                .body(reviewsSink.asFlux(), Review.class)
+                .log();
 
 
     }
