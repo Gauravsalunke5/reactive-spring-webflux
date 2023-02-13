@@ -142,7 +142,7 @@ public class MovieInfoControllerUnitTest {
                 2013, List.of("Christian Bale1", "Tom Hardy1"), LocalDate.parse("2012-07-20"));
 
         when(moviesInfoServiceMock.updateMovieInfo(isA(MovieInfo.class), isA(String.class)))
-                .thenReturn(Mono.just(updatedMovieInfo));
+                .thenReturn(Mono.just( ));
 
         webTestClient
                 .put()
